@@ -1,15 +1,18 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <RealTimeMonitoring />
+    <!-- Add other components as needed -->
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import RealTimeMonitoring from './components/RealTimeMonitoring.vue'
+// Import other components as needed
 
 export default {
-  name: 'App',
   components: {
-    HelloWorld
+    RealTimeMonitoring,
+    // Add other components as needed
   }
 }
 </script>
