@@ -1,16 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const SensorDataController = require('../controllers/SensorDataController');
 
-// Import your controllers here
-//const SensorDataChartController = require('../controllers/SensorDataChartController');
-//const RealTimeMonitoringController = require('../controllers/RealTimeMonitoringController');
-//const WaterPumpController = require('../controllers/WaterPumpController');
-//const AddESP32Controller = require('../controllers/AddESP32Controller');
+router.get('/', function(req, res) {
+  res.send('Hello World!');
+});
 
-// Define your routes here
-//router.get('/sensor-data', SensorDataChartController.handleRequest);
-//router.get('/real-time-monitoring', RealTimeMonitoringController.handleRequest);
-//router.get('/water-pump-control', WaterPumpController.handleRequest);
-//router.post('/add-esp32', AddESP32Controller.handleRequest);
+router.get('/sensor-data', SensorDataController.handleRequest);
 
 module.exports = router;

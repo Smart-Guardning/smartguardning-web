@@ -7,7 +7,6 @@
 
 <script>
 import io from 'socket.io-client';
-
 export default {
   data() {
     return {
@@ -20,7 +19,7 @@ export default {
       this.sensorData = data;
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.socket.close();
   },
 };
