@@ -1,17 +1,20 @@
 <template>
   <div id="app">
     <RealTimeMonitoring />
+    <ADDESP32 />
     <!-- Add other components as needed -->
   </div>
 </template>
 
 <script>
 import RealTimeMonitoring from './components/RealTimeMonitoring.vue'
+import ADDESP32 from './components/ADDESP32.vue'
 // Import other components as needed
 
 export default {
   components: {
     RealTimeMonitoring,
+    ADDESP32,
     // Add other components as needed
   }
 }
