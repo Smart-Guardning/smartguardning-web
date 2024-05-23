@@ -2,8 +2,8 @@ const aedes = require('aedes')();
 const server = require('net').createServer(aedes.handle);
 const io = require('./websocket.js'); // Import the io object from websocket.js
 
-server.listen(1883, function () {
-  console.log('server started and listening on port 1883');
+server.listen(1884, function () {
+  console.log('server started and listening on port 1884');
 });
 
 aedes.on('client', function (client) {
