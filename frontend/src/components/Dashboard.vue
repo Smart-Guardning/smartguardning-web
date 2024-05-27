@@ -12,7 +12,6 @@
           <router-view />
         </div>
 
-        <Footer />
 
       </div>
     </div>
@@ -24,7 +23,6 @@ import { mapState } from 'vuex'
 
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
-import Footer from './Footer'
 
 export default {
   name: 'Dashboard',
@@ -34,7 +32,6 @@ export default {
   components: {
     Sidebar,
     Navbar,
-    Footer
   }
 }
 </script>

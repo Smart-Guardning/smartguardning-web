@@ -1,6 +1,16 @@
 <template>
-    <div id="home">
-
+  <div id="home">
+    <div v-if="!isArduinoAdded" class="add-arduino fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-content text-center bg-white p-10 rounded shadow-lg w-1/2 h-1/2">
+      <h2 class="text-2xl mb-4" v-if="!showModal">ADD ARDUINO</h2>
+      <button @click="addArduino" class="text-4xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" v-if="!showModal">
+        +
+      </button>
+     <add-arduino-modal v-if="showModal" :showModal="showModal" @close="showModal = false"></add-arduino-modal>
+      </div>
+    <div v-if="showModal" class="modal-backdrop fixed inset-0 bg-black opacity-50"></div>
+    </div>
+      <div :style="{ filter: isArduinoAdded ? 'none' : 'blur(10px)' }">
         <!-- breadcrumb -->
             <nav class="text-sm font-semibold mb-6" aria-label="Breadcrumb">
               <ol class="list-none p-0 inline-flex">
@@ -16,7 +26,6 @@
             <!-- breadcrumb end -->
 
             <div class="lg:flex justify-between items-center mb-6">
-              <p class="text-2xl font-semibold mb-2 lg:mb-0">Good afternoon, Joe!</p>
               <button class="bg-blue-500 hover:bg-blue-600 focus:outline-none rounded-lg px-6 py-2 text-white font-semibold shadow">View Logs</button>
             </div>
 
@@ -97,17 +106,33 @@
               </div>
 
             </div>
-
+        </div>
     </div>
 </template>
 
+<style scoped>
+.modal-content {
+  position: relative;
+  z-index: 10;
+}
+
+.modal-backdrop {
+  position: absolute;
+}
+</style>
 <script>
 import Chart from 'chart.js'
+import AddArduinoModal from '../components/AddArduinoModal.vue'
 
 export default {
+  components: {
+    'add-arduino-modal': AddArduinoModal
+  },
     name: 'DashboardHome',
     data() {
         return {
+          showModal: false,
+          isArduinoAdded: false,
             buyersData: {
                 type: 'line',
                 data: {
@@ -184,6 +209,14 @@ export default {
             }
         }
     },
+    methods: {
+      addArduino() {
+      this.showModal = true;
+    },
+    closeModal() {
+      this.showModal = false;
+    }
+  },
     mounted () {
         new Chart(document.getElementById('buyers-chart'), this.buyersData)
         new Chart(document.getElementById('reviews-chart'), this.reviewsData)
