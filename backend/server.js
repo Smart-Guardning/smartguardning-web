@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
 const router = require('./routes/router');
-
+const cors = require('cors');
+app.use(cors());
 // Import mqtt and websocket modules
 require('./mqtt.js');
 require('./websocket.js');

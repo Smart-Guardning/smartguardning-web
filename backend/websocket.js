@@ -11,9 +11,8 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(8080, () => {
-  console.log('Socket.IO server listening on port 8080');
+server.listen(8081, () => { // 변경된 포트
+  console.log('Socket.IO server listening on port 8081'); // 변경된 포트
 });
-
 
 module.exports = io; // Export the io object so it can be used in other files

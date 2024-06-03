@@ -8,7 +8,5 @@ router.get('/', function(req, res) {
   res.send('Hello World!');
 });
 
-
-router.post('/api/add-arduino', ESP32Controller.addArduino);
-
+router.get('/api/find-arduinos', ESP32Controller.findArduinos);
 module.exports = router;

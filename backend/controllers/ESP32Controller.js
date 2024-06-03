@@ -1,25 +1,25 @@
-const aedes = require('../mqtt.js'); // Adjust the path as necessary
+// ESP32Controller.js
+const axios = require('axios');
+const mqttClient = require('../mqtt.js');
 
-const ESP32Controller = {
-  addArduino: async (req, res) => {
-  const id = req.body.id;
-
-  // Publish the Arduino ID to the MQTT broker
-  const packet = {
-    topic: 'arduino/id',
-    payload: id,
-    qos: 0,
-    retain: false
-  };
-  aedes.publish(packet, function(err) {
-    if (err) {
-      console.error(err);
-      res.json({ success: false });
-    } else {
-      res.json({ success: true });
-    }
-  });
-}
+exports.findArduinos = async (req, res) => {
+  try {
+    mqttClient.subscribe('arduinos', function (err) {
+      if (err) {
+        console.error('Error subscribing to arduinos:', err);
+        res.status(500).send(err);
+      } else {
+        mqttClient.on('message', function (topic, message) {
+          if (topic === 'arduinos') {
+            const arduinos = JSON.parse(message.toString());
+            const nodeIds = arduinos.map(arduino => arduino.node_id); // node_id만 추출
+            res.json(nodeIds);
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error in findArduinos:', error);
+    res.status(500).send(error);
+  }
 };
-
-module.exports = ESP32Controller;
