@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "aedes": "^0.51.1",
+    "axios": "^1.7.2",
     "express": "^4.19.2",
+    "mqtt": "^5.7.0",
     "socket.io": "^4.7.5"
   }
 }
