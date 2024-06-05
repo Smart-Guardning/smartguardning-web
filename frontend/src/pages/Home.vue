@@ -107,10 +107,41 @@
 
             </div>
         </div>
+        <!-- 비밀번호 모달 -->
+          <div>
+      <div v-if="showModalpassword" class="blur-background"></div>
+
+      <div v-if="showModalpassword" class="modal">
+        <h2>비밀번호 입력</h2>
+        <input type="password" v-model="password" placeholder="비밀번호">
+        <button @click="checkPassword">제출</button>
+      </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.blur-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+}
 .modal-content {
   position: relative;
   z-index: 10;
@@ -131,8 +162,10 @@ export default {
     name: 'DashboardHome',
     data() {
         return {
+          showModalpassword: true,
           showModal: false,
           isArduinoAdded: false,
+          password: '',
             buyersData: {
                 type: 'line',
                 data: {
@@ -213,6 +246,13 @@ export default {
       addArduino() {
       this.showModal = true;
     },
+      checkPassword() {
+        if (this.password === '0000') {
+          this.showModalpassword = false;  // 비밀번호가 맞으면 모달을 숨김
+        } else {
+          alert('비밀번호가 틀렸습니다.');  // 비밀번호가 틀리면 경고 메시지 표시
+        }
+      },
     closeModal() {
       this.showModal = false;
     }
