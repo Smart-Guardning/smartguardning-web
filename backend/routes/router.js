@@ -9,4 +9,5 @@ router.get('/', function(req, res) {
 });
 
 router.get('/api/find-arduinos', ESP32Controller.findArduinos);
+router.post('/api/add-arduino', ESP32Controller.addArduino);
 module.exports = router;

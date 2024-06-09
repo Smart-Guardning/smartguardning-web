@@ -1,29 +1,39 @@
 const aedes = require('aedes')();
 const server = require('net').createServer(aedes.handle);
-const io = require('./websocket.js'); // Import the io object from websocket.js
-// mqtt.js
-const mqtt = require('mqtt');
-const client  = mqtt.connect('mqtt://localhost:1884') // Update with your broker address
+const io = require('./websocket');
+const mqttClient = require('mqtt').connect('mqtt://localhost:1884');
 
-client.on('connect', function () {
-  console.log('mqtt client connected');
+mqttClient.on('connect', () => {
+  console.log('MQTT client connected');
 });
 
-module.exports = client;
-server.listen(1884, function () {
-  console.log('server started and listening on port 1884');
-});
-
-aedes.on('client', function (client) {
-  console.log('client connected', client.id);
-});
-
-aedes.on('publish', function (packet, client) {
-  if (client) {
-    console.log('message from client', client.id);
+mqttClient.subscribe('smartfarm/sensor/#', (err) => {
+  if (err) {
+    console.error('Error subscribing to topic:', err);
+  } else {
+    console.log('Subscribed to topic: smartfarm/sensor/#');
   }
-  console.log('Published', packet.payload.toString());
-
-  // Emit the sensor data to all connected WebSocket clients
-  io.emit('sensorData', packet.payload.toString());
 });
+
+mqttClient.on('message', (topic, message) => {
+  if (topic.startsWith('smartfarm/sensor/')) {
+    const sensorData = JSON.parse(message.toString());
+    const nodeId = sensorData.node_id;
+    // Emit the sensor data to all connected WebSocket clients
+    io.emit('sensorData', sensorData);
+  }
+});
+
+server.listen(1884, () => {
+  console.log('MQTT server started and listening on port 1884');
+});
+
+aedes.on('client', (client) => {
+  console.log('Client connected', client.id);
+});
+
+aedes.on('publish', (packet, client) => {
+  console.log('Published', packet.payload.toString());
+});
+
+module.exports = mqttClient;

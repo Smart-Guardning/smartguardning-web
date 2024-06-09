@@ -2,15 +2,15 @@
   <div id="home">
     <div v-if="!isArduinoAdded" class="add-arduino fixed inset-0 flex items-center justify-center z-50">
       <div class="modal-content text-center bg-white p-10 rounded shadow-lg w-1/2 h-1/2">
-      <h2 class="text-2xl mb-4" v-if="!showModal">ADD ARDUINO</h2>
-      <button @click="addArduino" class="text-4xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" v-if="!showModal">
+        <h2 class="text-2xl mb-4" v-if="!showModal">ADD ARDUINO</h2>
+        <button @click="addArduino" class="text-4xl bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" v-if="!showModal">
         +
       </button>
-     <add-arduino-modal v-if="showModal" :showModal="showModal" @close="showModal = false"></add-arduino-modal>
+        <add-arduino-modal v-if="showModal" :showModal="showModal" @close="showModal = false"></add-arduino-modal>
       </div>
-    <div v-if="showModal" class="modal-backdrop fixed inset-0 bg-black opacity-50"></div>
+      <div v-if="showModal" class="modal-backdrop fixed inset-0 bg-black opacity-50"></div>
     </div>
-      <div :style="{ filter: isArduinoAdded ? 'none' : 'blur(10px)' }">
+    <div :style="{ filter: isArduinoAdded ? 'none' : 'blur(10px)' }">
         <!-- breadcrumb -->
             <nav class="text-sm font-semibold mb-6" aria-label="Breadcrumb">
               <ol class="list-none p-0 inline-flex">
