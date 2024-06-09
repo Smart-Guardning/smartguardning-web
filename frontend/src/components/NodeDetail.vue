@@ -14,6 +14,10 @@
         🔄
       </button>
     </div>
+    <div>
+      <button @click="testPump">Test Pump</button>
+      <button @click="showSettings">Settings</button>
+    </div>
     <div class="chart-container">
       <div class="chart-item large-chart">
         <canvas id="soil-moisture-chart"></canvas>
@@ -26,6 +30,19 @@
       </div>
       <div class="chart-item small-chart">
         <canvas id="humidity-chart"></canvas>
+      </div>
+    </div>
+    <div v-if="showSettingsModal">
+      <div class="modal">
+        <h2>Settings</h2>
+        <label for="targetMoisture">Target Moisture:</label>
+        <input type="number" v-model="settings.targetMoisture" id="targetMoisture" />
+        <label for="wateringDuration">Watering Duration (ms):</label>
+        <input type="number" v-model="settings.wateringDuration" id="wateringDuration" />
+        <label for="measurementInterval">Measurement Interval (s):</label>
+        <input type="number" v-model="settings.measurementInterval" id="measurementInterval" />
+        <button @click="saveSettings">Save</button>
+        <button @click="closeSettings">Cancel</button>
       </div>
     </div>
   </div>
@@ -45,6 +62,12 @@ export default {
       sensorData: [],
       timeRange: '1min', // Default time range
       refreshInterval: null,
+      showSettingsModal: false,
+      settings: {
+        targetMoisture: 2500,
+        wateringDuration: 3000,
+        measurementInterval: 30
+      }
     };
   },
   methods: {
@@ -56,7 +79,72 @@ export default {
           this.filterData();
         });
     },
-    initializeChart(ctx, label, data, color) {
+    testPump() {
+      fetch(`http://localhost:3000/api/control-pump/${this.node_id}?action=on`)
+        .then(() => setTimeout(() => {
+          fetch(`http://localhost:3000/api/control-pump/${this.node_id}?action=off`);
+        }, 3000));
+    },
+    showSettings() {
+      this.showSettingsModal = true;
+    },
+    closeSettings() {
+      this.showSettingsModal = false;
+    },
+    saveSettings() {
+      fetch(`http://localhost:3000/api/save-settings/${this.node_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(this.settings)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        this.closeSettings();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    },
+    initializeChart(ctx, label, data, color, yAxisLimits = null) {
+      const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 0 // 애니메이션 비활성화
+        },
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              unit: this.timeUnit(),
+              displayFormats: {
+                millisecond: 'MMM DD HH:mm',
+                second: 'MMM DD HH:mm',
+                minute: 'MMM DD HH:mm',
+                hour: 'MMM DD HH:mm',
+                day: 'MMM DD HH:mm',
+                week: 'MMM DD HH:mm',
+                month: 'MMM DD HH:mm',
+                quarter: 'MMM DD HH:mm',
+                year: 'MMM DD HH:mm',
+              }
+            }
+          }]
+        }
+      };
+
+      if (yAxisLimits) {
+        options.scales.yAxes = [{
+          ticks: {
+            min: yAxisLimits.min,
+            max: yAxisLimits.max
+          }
+        }];
+      }
+
       return new Chart(ctx, {
         type: 'line',
         data: {
@@ -69,21 +157,7 @@ export default {
             fill: false,
           }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 0 // 애니메이션 비활성화
-          },
-          scales: {
-            xAxes: [{
-              type: 'time',
-              time: {
-                unit: this.timeUnit()
-              }
-            }]
-          }
-        }
+        options
       });
     },
     initializeCharts() {
@@ -94,10 +168,31 @@ export default {
 
       const filteredData = this.getFilteredData();
 
-      this.soilMoistureChart = this.initializeChart(soilMoistureCtx, 'Soil Moisture', filteredData.map(d => ({ timestamp: d.timestamp, value: d.soil_moisture })), 'rgba(75, 192, 192, 1)');
-      this.waterLevelChart = this.initializeChart(waterLevelCtx, 'Water Level', filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })), 'rgba(54, 162, 235, 1)');
-      this.temperatureChart = this.initializeChart(temperatureCtx, 'Temperature', filteredData.map(d => ({ timestamp: d.timestamp, value: d.temperature })), 'rgba(255, 206, 86, 1)');
-      this.humidityChart = this.initializeChart(humidityCtx, 'Humidity', filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })), 'rgba(153, 102, 255, 1)');
+      this.soilMoistureChart = this.initializeChart(
+        soilMoistureCtx, 
+        'Soil Moisture', 
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.soil_moisture })), 
+        'rgba(75, 192, 192, 1)', 
+        { min: 0, max: 3500 }
+      );
+      this.waterLevelChart = this.initializeChart(
+        waterLevelCtx, 
+        'Water Level', 
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })), 
+        'rgba(54, 162, 235, 1)'
+      );
+      this.temperatureChart = this.initializeChart(
+        temperatureCtx, 
+        'Temperature', 
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.temperature })), 
+        'rgba(255, 206, 86, 1)'
+      );
+      this.humidityChart = this.initializeChart(
+        humidityCtx, 
+        'Humidity', 
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })), 
+        'rgba(153, 102, 255, 1)'
+      );
     },
     updateCharts() {
       ['soilMoistureChart', 'waterLevelChart', 'temperatureChart', 'humidityChart'].forEach(chart => {
@@ -210,5 +305,15 @@ export default {
 .small-chart {
   flex-basis: calc(33.33% - 20px);
   height: 200px;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 </style>

@@ -1,5 +1,10 @@
 const db = require('../db.js');
+const mqtt = require('mqtt');
+
 let availableNodes = {}; // 사용할 수 있는 노드를 저장하는 객체
+
+// MQTT 클라이언트 설정
+const mqttClient = mqtt.connect('mqtt://192.168.1.243:1884');
 
 exports.addSensorData = (sensorData) => {
   const { node_id, soil_moisture, water_level, temperature, humidity, waterpipe, error_code } = sensorData;
@@ -82,5 +87,35 @@ exports.addArduino = (req, res) => {
       return res.status(500).send(err);
     }
     res.status(201).send('Arduino added successfully');
+  });
+};
+
+exports.controlPump = (req, res) => {
+  const nodeId = req.params.node_id;
+  const action = req.query.action; 
+
+  if (action === 'on' || action === 'off') {
+    const topic = `smartfarm/commands/${nodeId}`;
+    const message = action === 'on' ? 'WATER_ON' : 'WATER_OFF';
+    mqttClient.publish(topic, message, () => {
+      res.status(200).send(`Pump turned ${action}`);
+    });
+  } else {
+    res.status(400).send('Invalid action');
+  }
+};
+
+exports.saveSettings = (req, res) => {
+  const nodeId = req.params.node_id;
+  const settings = req.body;
+  const topic = `smartfarm/settings/${nodeId}`;
+
+  mqttClient.publish(topic, JSON.stringify(settings), (err) => {
+    if (err) {
+      console.error('Failed to publish MQTT message:', err);
+      res.status(500).send('Failed to save settings');
+    } else {
+      res.status(200).send('Settings saved');
+    }
   });
 };
