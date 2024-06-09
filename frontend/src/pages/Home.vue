@@ -154,6 +154,13 @@ export default {
     addArduino() {
       this.showModal = true;
     },
+      checkPassword() {
+        if (this.password === '0000') {
+          this.showModalpassword = false;  // 비밀번호가 맞으면 모달을 숨김
+        } else {
+          alert('비밀번호가 틀렸습니다.');  // 비밀번호가 틀리면 경고 메시지 표시
+        }
+      },
     closeModal() {
       this.showModal = false;
       this.fetchArduinos(); // 모달 닫을 때 다시 아두이노 목록 갱신
