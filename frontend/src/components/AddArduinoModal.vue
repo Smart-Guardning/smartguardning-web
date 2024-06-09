@@ -2,15 +2,15 @@
   <div v-if="showModal" class="modal">
     <div class="modal-content">
       <button @click="closeModal">Close</button>
-      <div v-for="arduino in arduinos" :key="arduino.id">
-        <p>{{ arduino.name }}</p>
-        <button @click="addArduino(arduino.id)">Add</button>
+      <div v-for="arduino in arduinos" :key="arduino">
+        <p>{{ arduino }}</p>
+        <button @click="addArduino(arduino)">Add</button>
       </div>
       <!-- 아두이노 선택 드롭다운 추가 -->
       <select v-model="selectedArduino" @change="selectArduino">
         <option disabled value="">--Select Arduino--</option>
-        <option v-for="arduino in arduinos" :key="arduino.id" :value="arduino.id">
-          {{ arduino.name }}
+        <option v-for="arduino in arduinos" :key="arduino" :value="arduino">
+          {{ arduino }}
         </option>
       </select>
     </div>
@@ -21,9 +21,9 @@
 import axios from 'axios';
 
 export default {
+  props: ['showModal'],
   data() {
     return {
-      showModal: true,
       arduinos: [],
       selectedArduino: '', // 선택한 아두이노를 저장하는 데이터 속성
     }
@@ -33,11 +33,11 @@ export default {
       this.$emit('close');
     },
     async findArduinos() {
-      const response = await axios.get('http://localhost:8080/api/find-arduinos');
-      this.arduinos = response.data.filter(arduino => arduino.isFrozen);
+      const response = await axios.get('http://localhost:3000/api/find-arduinos');
+      this.arduinos = response.data; // 필터링 제거
     },
     async addArduino(id) {
-      await axios.post('/api/add-arduino', { id });
+      await axios.post('http://localhost:3000/api/add-arduino', { id });
       this.findArduinos();
     },
     selectArduino() {
@@ -52,3 +52,14 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.modal-content {
+  position: relative;
+  z-index: 10;
+}
+
+.modal-backdrop {
+  position: absolute;
+}
+</style>
