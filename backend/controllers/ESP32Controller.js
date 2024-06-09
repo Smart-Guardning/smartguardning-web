@@ -90,9 +90,35 @@ exports.addArduino = (req, res) => {
   });
 };
 
+exports.handleControlMessage = (topic, message) => {
+  const nodeId = topic.split('/')[2]; // 노드 ID 추출
+
+  if (message.startsWith('TARGET_MOISTURE')) {
+    const value = message.split(':')[1];
+    console.log(`Setting target moisture for ${nodeId} to ${value}`);
+  } else if (message.startsWith('AUTO_WATER')) {
+    const value = message.split(':')[1];
+    console.log(`Setting auto water for ${nodeId} to ${value}`);
+  } else if (message.startsWith('WATER_DURATION')) {
+    const value = message.split(':')[1];
+    console.log(`Setting water duration for ${nodeId} to ${value}`);
+  } else if (message.startsWith('MEASUREMENT_INTERVAL')) {
+    const value = message.split(':')[1];
+    console.log(`Setting measurement interval for ${nodeId} to ${value}`);
+  } else if (message.startsWith('SLEEP')) {
+    const value = message.split(':')[1];
+    console.log(`Setting sleep mode for ${nodeId} to ${value}`);
+  } else if (message === 'WATER_ON' || message === 'WATER_OFF') {
+    console.log(`Received control message: ${message}`);
+    io.emit('controlMessage', { topic, message });
+  } else {
+    console.error('Unknown message format');
+  }
+};
+
 exports.controlPump = (req, res) => {
   const nodeId = req.params.node_id;
-  const action = req.query.action; 
+  const action = req.query.action;
 
   if (action === 'on' || action === 'off') {
     const topic = `smartfarm/commands/${nodeId}`;
@@ -108,7 +134,7 @@ exports.controlPump = (req, res) => {
 exports.saveSettings = (req, res) => {
   const nodeId = req.params.node_id;
   const settings = req.body;
-  const topic = `smartfarm/settings/${nodeId}`;
+  const topic = `smartfarm/commands/${nodeId}`;
 
   const settingsMessages = [
     `TARGET_MOISTURE:${settings.targetMoisture}`,

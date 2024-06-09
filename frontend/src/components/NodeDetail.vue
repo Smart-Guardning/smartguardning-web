@@ -214,7 +214,7 @@ export default {
         'Water Level',
         filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })),
         'rgba(54, 162, 235, 1)',
-        { min: 0, max: 330 }
+        { min: 0, max: 2500 }
       );
       this.temperatureChart = this.initializeChart(
         temperatureCtx,
