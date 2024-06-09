@@ -31,6 +31,9 @@
       <div class="chart-item small-chart">
         <canvas id="humidity-chart"></canvas>
       </div>
+      <div class="chart-item small-chart">
+        <canvas id="battery-level-chart"></canvas>
+      </div>
     </div>
     <div v-if="showSettingsModal">
       <div class="modal">
@@ -59,6 +62,7 @@ export default {
       waterLevelChart: null,
       temperatureChart: null,
       humidityChart: null,
+      batteryLevelChart: null,
       sensorData: [],
       timeRange: '1min', // Default time range
       refreshInterval: null,
@@ -165,6 +169,7 @@ export default {
       const waterLevelCtx = document.getElementById('water-level-chart').getContext('2d');
       const temperatureCtx = document.getElementById('temperature-chart').getContext('2d');
       const humidityCtx = document.getElementById('humidity-chart').getContext('2d');
+      const batteryLevelCtx = document.getElementById('battery-level-chart').getContext('2d');
 
       const filteredData = this.getFilteredData();
 
@@ -193,9 +198,16 @@ export default {
         filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })), 
         'rgba(153, 102, 255, 1)'
       );
+      this.batteryLevelChart = this.initializeChart(
+        batteryLevelCtx, 
+        'Battery Level', 
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.battery_level })), 
+        'rgba(255, 99, 132, 1)', 
+        { min: 0, max: 5 }
+      );
     },
     updateCharts() {
-      ['soilMoistureChart', 'waterLevelChart', 'temperatureChart', 'humidityChart'].forEach(chart => {
+      ['soilMoistureChart', 'waterLevelChart', 'temperatureChart', 'humidityChart', 'batteryLevelChart'].forEach(chart => {
         if (this[chart]) {
           this[chart].destroy();
         }
@@ -246,7 +258,8 @@ export default {
               soil_moisture: null,
               water_level: null,
               temperature: null,
-              humidity: null
+              humidity: null,
+              battery_level: null
             });
           }
         }

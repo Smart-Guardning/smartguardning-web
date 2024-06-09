@@ -41,6 +41,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             temperature REAL,
             humidity REAL,
             waterpipe INTEGER,
+            battery_level REAL,
             error_code INTEGER,
             FOREIGN KEY(node_id) REFERENCES nodes(node_id)
         )`, (err) => {

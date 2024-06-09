@@ -7,12 +7,12 @@ let availableNodes = {}; // 사용할 수 있는 노드를 저장하는 객체
 const mqttClient = mqtt.connect('mqtt://192.168.1.243:1884');
 
 exports.addSensorData = (sensorData) => {
-  const { node_id, soil_moisture, water_level, temperature, humidity, waterpipe, error_code } = sensorData;
+  const { node_id, soil_moisture, water_level, temperature, humidity, waterpipe, battery_level, error_code } = sensorData;
 
   // 새로운 노드 ID를 추가
   availableNodes[node_id] = {
     node_id,
-    description: `Description for ${node_id}` // 기본 설명 추가 (필요에 따라 수정 가능)
+    description: `Description for ${node_id}`
   };
 
   db.get('SELECT * FROM nodes WHERE node_id = ?', [node_id], (err, row) => {
@@ -21,8 +21,8 @@ exports.addSensorData = (sensorData) => {
       return;
     }
     if (row) {
-      const query = `INSERT INTO sensor_data (node_id, timestamp, soil_moisture, water_level, temperature, humidity, waterpipe, error_code) VALUES (?, datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?)`;
-      db.run(query, [node_id, soil_moisture, water_level, temperature, humidity, waterpipe, error_code], function (err) {
+      const query = `INSERT INTO sensor_data (node_id, timestamp, soil_moisture, water_level, temperature, humidity, waterpipe, battery_level, error_code) VALUES (?, datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?, ?)`;
+      db.run(query, [node_id, soil_moisture, water_level, temperature, humidity, waterpipe, battery_level, error_code], function (err) {
         if (err) {
           console.error('DB Error:', err);
         } else {
