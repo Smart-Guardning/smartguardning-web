@@ -12,8 +12,17 @@ const io = socketIo(server, {
 });
 
 io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('joinNodeRoom', (node_id) => {
+    socket.join(node_id);
+    console.log(`Client ${socket.id} joined room: ${node_id}`);
+  });
+
   socket.on('sensorData', (data) => {
     console.log(`Received sensor data => ${data}`);
+    const parsedData = JSON.parse(data);
+    io.to(parsedData.node_id).emit('sensorData', data);
   });
 
   socket.on('disconnect', (reason) => {

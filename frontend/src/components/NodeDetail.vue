@@ -4,13 +4,15 @@
     <div>
       <label for="timeRange">Select Time Range:</label>
       <select id="timeRange" v-model="timeRange" @change="filterData">
-        <option value="30sec">30 sec</option>
         <option value="1min">1 min</option>
         <option value="5min">5 min</option>
         <option value="hour">Last Hour</option>
         <option value="day">Last 24 Hours</option>
         <option value="week">Last Week</option>
       </select>
+      <button @click="fetchSensorData" title="Refresh Data">
+        🔄
+      </button>
     </div>
     <div class="chart-container">
       <div class="chart-item large-chart">
@@ -30,41 +32,59 @@
 </template>
 
 <script>
-import io from 'socket.io-client';
 import Chart from 'chart.js';
 
 export default {
   props: ['node_id'],
   data() {
     return {
-      socket: null,
       soilMoistureChart: null,
       waterLevelChart: null,
       temperatureChart: null,
       humidityChart: null,
       sensorData: [],
       timeRange: '1min', // Default time range
+      refreshInterval: null,
     };
   },
   methods: {
-    setupSocket() {
-      this.socket = io('http://localhost:8081');
-
-      this.socket.on('sensorData', (data) => {
-        const parsedData = JSON.parse(data);
-        if (parsedData.node_id === this.node_id) {
-          this.sensorData.push(parsedData);
-          this.filterData(); // Apply filter when new data arrives
-        }
-      });
-    },
     fetchSensorData() {
       fetch(`http://localhost:3000/api/sensor-data/${this.node_id}`)
         .then(response => response.json())
         .then(data => {
           this.sensorData = data;
-          this.initializeCharts();
+          this.filterData();
         });
+    },
+    initializeChart(ctx, label, data, color) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.timestamp),
+          datasets: [{
+            label,
+            data: data.map(d => d.value),
+            borderColor: color,
+            borderWidth: 1,
+            fill: false,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 0 // 애니메이션 비활성화
+          },
+          scales: {
+            xAxes: [{
+              type: 'time',
+              time: {
+                unit: this.timeUnit()
+              }
+            }]
+          }
+        }
+      });
     },
     initializeCharts() {
       const soilMoistureCtx = document.getElementById('soil-moisture-chart').getContext('2d');
@@ -72,142 +92,21 @@ export default {
       const temperatureCtx = document.getElementById('temperature-chart').getContext('2d');
       const humidityCtx = document.getElementById('humidity-chart').getContext('2d');
 
-      this.soilMoistureChart = new Chart(soilMoistureCtx, {
-        type: 'line',
-        data: {
-          labels: this.getFilteredData().map(d => d.timestamp),
-          datasets: [{
-            label: 'Soil Moisture',
-            data: this.getFilteredData().map(d => d.soil_moisture),
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-            fill: false,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            xAxes: [{
-              type: 'time',
-              time: {
-                unit: 'minute'
-              },
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 10
-              }
-            }]
-          }
-        }
-      });
+      const filteredData = this.getFilteredData();
 
-      this.waterLevelChart = new Chart(waterLevelCtx, {
-        type: 'line',
-        data: {
-          labels: this.getFilteredData().map(d => d.timestamp),
-          datasets: [{
-            label: 'Water Level',
-            data: this.getFilteredData().map(d => d.water_level),
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            fill: false,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            xAxes: [{
-              type: 'time',
-              time: {
-                unit: 'minute'
-              },
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 10
-              }
-            }]
-          }
-        }
-      });
-
-      this.temperatureChart = new Chart(temperatureCtx, {
-        type: 'line',
-        data: {
-          labels: this.getFilteredData().map(d => d.timestamp),
-          datasets: [{
-            label: 'Temperature',
-            data: this.getFilteredData().map(d => d.temperature),
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1,
-            fill: false,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            xAxes: [{
-              type: 'time',
-              time: {
-                unit: 'minute'
-              },
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 10
-              }
-            }]
-          }
-        }
-      });
-
-      this.humidityChart = new Chart(humidityCtx, {
-        type: 'line',
-        data: {
-          labels: this.getFilteredData().map(d => d.timestamp),
-          datasets: [{
-            label: 'Humidity',
-            data: this.getFilteredData().map(d => d.humidity),
-            borderColor: 'rgba(153, 102, 255, 1)',
-            borderWidth: 1,
-            fill: false,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            xAxes: [{
-              type: 'time',
-              time: {
-                unit: 'minute'
-              },
-              ticks: {
-                autoSkip: true,
-                maxTicksLimit: 10
-              }
-            }]
-          }
-        }
-      });
+      this.soilMoistureChart = this.initializeChart(soilMoistureCtx, 'Soil Moisture', filteredData.map(d => ({ timestamp: d.timestamp, value: d.soil_moisture })), 'rgba(75, 192, 192, 1)');
+      this.waterLevelChart = this.initializeChart(waterLevelCtx, 'Water Level', filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })), 'rgba(54, 162, 235, 1)');
+      this.temperatureChart = this.initializeChart(temperatureCtx, 'Temperature', filteredData.map(d => ({ timestamp: d.timestamp, value: d.temperature })), 'rgba(255, 206, 86, 1)');
+      this.humidityChart = this.initializeChart(humidityCtx, 'Humidity', filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })), 'rgba(153, 102, 255, 1)');
     },
     updateCharts() {
-      this.soilMoistureChart.data.labels = this.getFilteredData().map(d => d.timestamp);
-      this.soilMoistureChart.data.datasets[0].data = this.getFilteredData().map(d => d.soil_moisture);
-      this.soilMoistureChart.update();
+      ['soilMoistureChart', 'waterLevelChart', 'temperatureChart', 'humidityChart'].forEach(chart => {
+        if (this[chart]) {
+          this[chart].destroy();
+        }
+      });
 
-      this.waterLevelChart.data.labels = this.getFilteredData().map(d => d.timestamp);
-      this.waterLevelChart.data.datasets[0].data = this.getFilteredData().map(d => d.water_level);
-      this.waterLevelChart.update();
-
-      this.temperatureChart.data.labels = this.getFilteredData().map(d => d.timestamp);
-      this.temperatureChart.data.datasets[0].data = this.getFilteredData().map(d => d.temperature);
-      this.temperatureChart.update();
-
-      this.humidityChart.data.labels = this.getFilteredData().map(d => d.timestamp);
-      this.humidityChart.data.datasets[0].data = this.getFilteredData().map(d => d.humidity);
-      this.humidityChart.update();
+      this.initializeCharts();
     },
     filterData() {
       this.updateCharts();
@@ -217,9 +116,6 @@ export default {
       let cutoffTime;
 
       switch (this.timeRange) {
-        case '30sec':
-          cutoffTime = new Date(now - 30 * 1000);
-          break;
         case '1min':
           cutoffTime = new Date(now - 60 * 1000);
           break;
@@ -239,16 +135,53 @@ export default {
           cutoffTime = new Date(now - 24 * 60 * 60 * 1000);
       }
 
-      return this.sensorData.filter(d => new Date(d.timestamp) >= cutoffTime);
+      const filteredData = this.sensorData.filter(d => new Date(d.timestamp) >= cutoffTime);
+
+      // Add missing data points
+      const resultData = [];
+      for (let i = 0; i < filteredData.length; i++) {
+        resultData.push(filteredData[i]);
+        if (i < filteredData.length - 1) {
+          const nextTime = new Date(filteredData[i + 1].timestamp).getTime();
+          const currentTime = new Date(filteredData[i].timestamp).getTime();
+          const diff = nextTime - currentTime;
+          if (diff > 3000) { // If the difference is greater than 3 seconds, add an empty data point
+            resultData.push({
+              timestamp: new Date(currentTime + 3000),
+              soil_moisture: null,
+              water_level: null,
+              temperature: null,
+              humidity: null
+            });
+          }
+        }
+      }
+
+      return resultData;
+    },
+    timeUnit() {
+      switch (this.timeRange) {
+        case '1min':
+        case '5min':
+          return 'minute';
+        case 'hour':
+          return 'hour';
+        case 'day':
+          return 'hour'; // Display in hours for the last 24 hours
+        case 'week':
+          return 'day';
+        default:
+          return 'hour';
+      }
     }
   },
   mounted() {
     this.fetchSensorData();
-    this.setupSocket();
+    this.refreshInterval = setInterval(this.fetchSensorData, 5000); // 5초 간격으로 자동 새로고침
   },
   beforeDestroy() {
-    if (this.socket) {
-      this.socket.disconnect();
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
     }
   }
 };
