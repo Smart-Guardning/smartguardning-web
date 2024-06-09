@@ -1,24 +1,27 @@
 <template>
   <div>
-    <h1>Node Details for {{ node_id }}</h1>
+    <h1>노드 이름 : {{ node_id }}</h1>
     <div>
-      <label for="timeRange">Select Time Range:</label>
-      <select id="timeRange" v-model="timeRange" @change="filterData">
-        <option value="1min">1 min</option>
-        <option value="5min">5 min</option>
-        <option value="hour">Last Hour</option>
-        <option value="day">Last 24 Hours</option>
-        <option value="week">Last Week</option>
+      <label for="timeRange">시간:</label>
+      <select id="timeRange" v-model="timeRange" @change="filterData" class="border border-gray-300 rounded p-2">
+        <option value="1min">1 분</option>
+        <option value="5min">5 분</option>
+        <option value="hour">1 시간</option>
+        <option value="day">24 시간</option>
+        <option value="week">1 주</option>
       </select>
-      <button @click="fetchSensorData" title="Refresh Data">
+      <button @click="fetchSensorData" title="Refresh Data"
+        class="ml-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         🔄
       </button>
     </div>
-    <div>
-      <button @click="testPump">Test Pump</button>
-      <button @click="showSettings">Settings</button>
+    <div class="mt-4">
+      <button @click="testPump" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">물 펌프
+        테스트</button>
+      <button @click="showSettings" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">노드
+        설정</button>
     </div>
-    <div class="chart-container">
+    <div class="chart-container mt-6">
       <div class="chart-item large-chart">
         <canvas id="soil-moisture-chart"></canvas>
       </div>
@@ -35,17 +38,24 @@
         <canvas id="battery-level-chart"></canvas>
       </div>
     </div>
-    <div v-if="showSettingsModal">
-      <div class="modal">
-        <h2>Settings</h2>
-        <label for="targetMoisture">Target Moisture:</label>
-        <input type="number" v-model="settings.targetMoisture" id="targetMoisture" />
-        <label for="wateringDuration">Watering Duration (ms):</label>
-        <input type="number" v-model="settings.wateringDuration" id="wateringDuration" />
-        <label for="measurementInterval">Measurement Interval (s):</label>
-        <input type="number" v-model="settings.measurementInterval" id="measurementInterval" />
-        <button @click="saveSettings">Save</button>
-        <button @click="closeSettings">Cancel</button>
+    <div v-if="showSettingsModal" class="modal-backdrop">
+      <div class="modal bg-white p-6 rounded shadow-lg w-1/2">
+        <h2 class="text-2xl mb-4">설정</h2>
+        <label for="targetMoisture" class="block text-gray-700 text-sm font-bold mb-2">임계 토양 습도:</label>
+        <input type="number" v-model="settings.targetMoisture" id="targetMoisture"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+        <label for="wateringDuration" class="block text-gray-700 text-sm font-bold mb-2 mt-4">펌프 작동 시간 (ms):</label>
+        <input type="number" v-model="settings.wateringDuration" id="wateringDuration"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+        <label for="measurementInterval" class="block text-gray-700 text-sm font-bold mb-2 mt-4">센싱 대기 시간 (s):</label>
+        <input type="number" v-model="settings.measurementInterval" id="measurementInterval"
+          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+        <div class="modal-buttons flex justify-end mt-6">
+          <button @click="saveSettings"
+            class="btn btn-blue bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">저장</button>
+          <button @click="closeSettings"
+            class="btn btn-gray bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">취소</button>
+        </div>
       </div>
     </div>
   </div>
@@ -64,7 +74,7 @@ export default {
       humidityChart: null,
       batteryLevelChart: null,
       sensorData: [],
-      timeRange: '1min', // Default time range
+      timeRange: '1min',
       refreshInterval: null,
       showSettingsModal: false,
       settings: {
@@ -103,14 +113,14 @@ export default {
         },
         body: JSON.stringify(this.settings)
       })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        this.closeSettings();
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          this.closeSettings();
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
     },
     initializeChart(ctx, label, data, color, yAxisLimits = null) {
       const options = {
@@ -174,36 +184,39 @@ export default {
       const filteredData = this.getFilteredData();
 
       this.soilMoistureChart = this.initializeChart(
-        soilMoistureCtx, 
-        'Soil Moisture', 
-        filteredData.map(d => ({ timestamp: d.timestamp, value: d.soil_moisture })), 
-        'rgba(75, 192, 192, 1)', 
+        soilMoistureCtx,
+        'Soil Moisture',
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.soil_moisture })),
+        'rgba(75, 192, 192, 1)',
         { min: 0, max: 3500 }
       );
       this.waterLevelChart = this.initializeChart(
-        waterLevelCtx, 
-        'Water Level', 
-        filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })), 
-        'rgba(54, 162, 235, 1)'
+        waterLevelCtx,
+        'Water Level',
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.water_level })),
+        'rgba(54, 162, 235, 1)',
+        { min: 0, max: 330 }
       );
       this.temperatureChart = this.initializeChart(
-        temperatureCtx, 
-        'Temperature', 
-        filteredData.map(d => ({ timestamp: d.timestamp, value: d.temperature })), 
-        'rgba(255, 206, 86, 1)'
+        temperatureCtx,
+        'Temperature',
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.temperature })),
+        'rgba(255, 206, 86, 1)',
+        { min: -40, max: 80 }
       );
       this.humidityChart = this.initializeChart(
-        humidityCtx, 
-        'Humidity', 
-        filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })), 
-        'rgba(153, 102, 255, 1)'
+        humidityCtx,
+        'Humidity',
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.humidity })),
+        'rgba(153, 102, 255, 1)',
+        { min: 0, max: 100 }
       );
       this.batteryLevelChart = this.initializeChart(
-        batteryLevelCtx, 
-        'Battery Level', 
-        filteredData.map(d => ({ timestamp: d.timestamp, value: d.battery_level })), 
-        'rgba(255, 99, 132, 1)', 
-        { min: 0, max: 5 }
+        batteryLevelCtx,
+        'Battery Level',
+        filteredData.map(d => ({ timestamp: d.timestamp, value: d.battery_level })),
+        'rgba(255, 99, 132, 1)',
+        { min: 3.0, max: 5.0 }
       );
     },
     updateCharts() {
@@ -244,7 +257,7 @@ export default {
 
       const filteredData = this.sensorData.filter(d => new Date(d.timestamp) >= cutoffTime);
 
-      // Add missing data points
+      // 데이터 간격이 3초 이상인 경우 누락된 데이터를 채워넣음
       const resultData = [];
       for (let i = 0; i < filteredData.length; i++) {
         resultData.push(filteredData[i]);
@@ -252,7 +265,7 @@ export default {
           const nextTime = new Date(filteredData[i + 1].timestamp).getTime();
           const currentTime = new Date(filteredData[i].timestamp).getTime();
           const diff = nextTime - currentTime;
-          if (diff > 3000) { // If the difference is greater than 3 seconds, add an empty data point
+          if (diff > 3000) {
             resultData.push({
               timestamp: new Date(currentTime + 3000),
               soil_moisture: null,
@@ -275,7 +288,7 @@ export default {
         case 'hour':
           return 'hour';
         case 'day':
-          return 'hour'; // Display in hours for the last 24 hours
+          return 'hour';
         case 'week':
           return 'day';
         default:
@@ -294,7 +307,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 .chart-container {
   display: flex;
@@ -306,13 +318,15 @@ export default {
 .chart-item {
   flex-grow: 1;
   border: 1px solid #000;
-  max-width: calc(33.33% - 20px); /* 제한된 최대 너비 추가 */
+  max-width: calc(33.33% - 20px);
+  /* 제한된 최대 너비 추가 */
 }
 
 .large-chart {
   flex-basis: 100%;
   height: 400px;
-  max-width: 100%; /* 제한된 최대 너비 추가 */
+  max-width: 100%;
+  /* 제한된 최대 너비 추가 */
 }
 
 .small-chart {
@@ -320,13 +334,71 @@ export default {
   height: 200px;
 }
 
-.modal {
+.modal-backdrop {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  /* 높은 z-index 설정 */
+}
+
+.modal {
   background: white;
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-green {
+  background-color: #38a169;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.btn-green:hover {
+  background-color: #2f855a;
+}
+
+.btn-blue {
+  background-color: #3182ce;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.btn-blue:hover {
+  background-color: #2b6cb0;
+}
+
+.btn-gray {
+  background-color: #a0aec0;
+  color: white;
+  transition: background-color 0.3s;
+}
+
+.btn-gray:hover {
+  background-color: #718096;
 }
 </style>

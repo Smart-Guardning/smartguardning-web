@@ -15,7 +15,7 @@
       <!-- right navbar -->
       <div class="flex items-center relative">
         <button @click="openAddArduinoModal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">
-          Add Arduino
+          센서 추가
         </button>
       </div>
     </div>
