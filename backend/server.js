@@ -1,13 +1,16 @@
 const express = require('express');
 const app = express();
-const cors = require('cors');
 const router = require('./routes/router');
-require('./mqtt');
-require('./websocket');
+const cors = require('cors');
+const db = require('./db.js'); // Import db.js to initialize the database
 
 app.use(cors());
 app.use(express.json());
 app.use('/', router);
+
+// Import mqtt and websocket modules
+require('./mqtt.js');
+require('./websocket.js');
 
 const server = app.listen(3000, function () {
     console.log('Server is running on http://localhost:3000');

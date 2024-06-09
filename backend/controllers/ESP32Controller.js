@@ -1,59 +1,72 @@
-const mqttClient = require('../mqtt.js');
+const db = require('../db.js');
 
-let isSubscribed = false;
-let sensorDataCache = {}; // 데이터를 캐시할 객체
+exports.addSensorData = (sensorData) => {
+  const { node_id, soil_moisture, water_level, temperature, humidity, waterpipe, error_code } = sensorData;
 
-// MQTT 초기화 함수
-function initializeMqtt() {
-  if (!isSubscribed) {
-    mqttClient.subscribe('smartfarm/sensor/#', function (err) {
-      if (err) {
-        console.error('Error subscribing to topic:', err);
-      } else {
-        console.log('Subscribed to topic: smartfarm/sensor/#');
-        isSubscribed = true;
-      }
-    });
-
-    mqttClient.on('message', function (topic, message) {
-      if (topic.startsWith('smartfarm/sensor/')) {
-        const sensorData = JSON.parse(message.toString());
-        const nodeId = sensorData.node_id;
-        sensorDataCache[nodeId] = sensorData; // 메시지 데이터를 저장
-      }
-    });
-  }
-}
-
-initializeMqtt();
-
-exports.findArduinos = async (req, res) => {
-  try {
-    const nodeIds = Object.keys(sensorDataCache); // 저장된 노드 ID 목록
-    if (nodeIds.length > 0) {
-      res.json(nodeIds);
-    } else {
-      res.status(404).send('No data available');
+  db.get('SELECT * FROM nodes WHERE node_id = ?', [node_id], (err, row) => {
+    if (err) {
+      console.error('DB Error:', err);
+      return;
     }
-  } catch (error) {
-    console.error('Error in findArduinos:', error);
-    res.status(500).send(error);
-  }
+    if (row) {
+      const query = `INSERT INTO sensor_data (node_id, timestamp, soil_moisture, water_level, temperature, humidity, waterpipe, error_code) VALUES (?, datetime('now', 'localtime'), ?, ?, ?, ?, ?, ?)`;
+      db.run(query, [node_id, soil_moisture, water_level, temperature, humidity, waterpipe, error_code], function (err) {
+        if (err) {
+          console.error('DB Error:', err);
+        } else {
+          console.log(`Sensor data added for node_id: ${node_id}`);
+        }
+      });
+    } else {
+      console.log(`Node ID ${node_id} not found in nodes table.`);
+    }
+  });
 };
 
-// addArduino 함수 수정
-exports.addArduino = async (req, res) => {
-  try {
-    const { id } = req.body;
-    // 노드를 추가한 후 MQTT 메시지 발행
-    const topic = `smartfarm/sensor/${id}`;
-    const message = JSON.stringify({ node_id: id, status: 'added' });
-    mqttClient.publish(topic, message);
+exports.findArduinos = (req, res) => {
+  db.all('SELECT * FROM nodes', [], (err, rows) => {
+    if (err) {
+      console.error('DB Error:', err);
+      return res.status(500).send(err);
+    }
+    res.json({ data: rows });
+  });
+};
 
-    console.log(`Arduino added: ${id}`);
-    res.status(200).send(`Arduino added: ${id}`);
-  } catch (error) {
-    console.error('Error in addArduino:', error);
-    res.status(500).send(error);
+exports.getArduinoDetails = (req, res) => {
+  const nodeId = req.params.nodeId;
+  db.get('SELECT * FROM nodes WHERE node_id = ?', [nodeId], (err, row) => {
+    if (err) {
+      console.error('DB Error:', err);
+      return res.status(500).send(err);
+    }
+    res.json(row);
+  });
+};
+
+exports.getSensorData = (req, res) => {
+  const nodeId = req.params.nodeId;
+  db.all('SELECT * FROM sensor_data WHERE node_id = ?', [nodeId], (err, rows) => {
+    if (err) {
+      console.error('DB Error:', err);
+      return res.status(500).send(err);
+    }
+    res.json(rows);
+  });
+};
+
+exports.addArduino = (req, res) => {
+  const { node_id, description } = req.body;
+  if (!node_id) {
+    return res.status(400).send('Node ID is required');
   }
+
+  const query = `INSERT INTO nodes (node_id, description, is_active) VALUES (?, ?, ?)`;
+  db.run(query, [node_id, description, 1], function (err) {
+    if (err) {
+      console.error('DB Error:', err);
+      return res.status(500).send(err);
+    }
+    res.status(201).send('Arduino added successfully');
+  });
 };

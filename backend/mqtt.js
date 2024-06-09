@@ -1,39 +1,33 @@
 const aedes = require('aedes')();
 const server = require('net').createServer(aedes.handle);
-const io = require('./websocket');
-const mqttClient = require('mqtt').connect('mqtt://localhost:1884');
+const io = require('./websocket.js'); // Import the io object from websocket.js
+const ESP32Controller = require('./controllers/ESP32Controller');
 
-mqttClient.on('connect', () => {
-  console.log('MQTT client connected');
-});
-
-mqttClient.subscribe('smartfarm/sensor/#', (err) => {
-  if (err) {
-    console.error('Error subscribing to topic:', err);
-  } else {
-    console.log('Subscribed to topic: smartfarm/sensor/#');
-  }
-});
-
-mqttClient.on('message', (topic, message) => {
-  if (topic.startsWith('smartfarm/sensor/')) {
-    const sensorData = JSON.parse(message.toString());
-    const nodeId = sensorData.node_id;
-    // Emit the sensor data to all connected WebSocket clients
-    io.emit('sensorData', sensorData);
-  }
-});
-
-server.listen(1884, () => {
+server.listen(1884, function () {
   console.log('MQTT server started and listening on port 1884');
 });
 
-aedes.on('client', (client) => {
-  console.log('Client connected', client.id);
+aedes.on('client', function (client) {
+  console.log('client connected', client.id);
 });
 
-aedes.on('publish', (packet, client) => {
+aedes.on('publish', function (packet, client) {
+  if (client) {
+    console.log('message from client', client.id);
+  }
   console.log('Published', packet.payload.toString());
-});
 
-module.exports = mqttClient;
+  // Emit the sensor data to all connected WebSocket clients for debugging
+  io.emit('sensorData', packet.payload.toString());
+
+  // Parse the MQTT message and save to database
+  try {
+    const sensorData = JSON.parse(packet.payload.toString());
+    ESP32Controller.addSensorData(sensorData); // Add sensor data to DB
+
+    // Emit the node ID to all connected WebSocket clients
+    io.emit('newNode', sensorData.node_id);
+  } catch (error) {
+    console.error('Error parsing MQTT message:', error);
+  }
+});
