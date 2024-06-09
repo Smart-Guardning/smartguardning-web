@@ -4,7 +4,7 @@ const router = require('./routes/router');
 const cors = require('cors');
 const db = require('./db.js'); // Import db.js to initialize the database
 
-app.use(cors());
+app.use(cors( { origin: '*' } ));
 app.use(express.json());
 app.use('/', router);
 

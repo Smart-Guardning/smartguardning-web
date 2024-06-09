@@ -3,6 +3,9 @@ const socketIo = require('socket.io');
 
 const server = http.createServer();
 const io = socketIo(server, {
+  cors: {
+    origin: '*',
+  },
   pingInterval: 10000, // 10 seconds
   pingTimeout: 5000,   // 5 seconds
   cookie: false

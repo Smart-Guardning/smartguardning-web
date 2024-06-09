@@ -92,6 +92,10 @@ export default {
               type: 'time',
               time: {
                 unit: 'minute'
+              },
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 10
               }
             }]
           }
@@ -118,6 +122,10 @@ export default {
               type: 'time',
               time: {
                 unit: 'minute'
+              },
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 10
               }
             }]
           }
@@ -144,6 +152,10 @@ export default {
               type: 'time',
               time: {
                 unit: 'minute'
+              },
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 10
               }
             }]
           }
@@ -170,6 +182,10 @@ export default {
               type: 'time',
               time: {
                 unit: 'minute'
+              },
+              ticks: {
+                autoSkip: true,
+                maxTicksLimit: 10
               }
             }]
           }
@@ -177,20 +193,21 @@ export default {
       });
     },
     updateCharts() {
-      if (this.soilMoistureChart) {
-        this.soilMoistureChart.destroy();
-      }
-      if (this.waterLevelChart) {
-        this.waterLevelChart.destroy();
-      }
-      if (this.temperatureChart) {
-        this.temperatureChart.destroy();
-      }
-      if (this.humidityChart) {
-        this.humidityChart.destroy();
-      }
+      this.soilMoistureChart.data.labels = this.getFilteredData().map(d => d.timestamp);
+      this.soilMoistureChart.data.datasets[0].data = this.getFilteredData().map(d => d.soil_moisture);
+      this.soilMoistureChart.update();
 
-      this.initializeCharts();
+      this.waterLevelChart.data.labels = this.getFilteredData().map(d => d.timestamp);
+      this.waterLevelChart.data.datasets[0].data = this.getFilteredData().map(d => d.water_level);
+      this.waterLevelChart.update();
+
+      this.temperatureChart.data.labels = this.getFilteredData().map(d => d.timestamp);
+      this.temperatureChart.data.datasets[0].data = this.getFilteredData().map(d => d.temperature);
+      this.temperatureChart.update();
+
+      this.humidityChart.data.labels = this.getFilteredData().map(d => d.timestamp);
+      this.humidityChart.data.datasets[0].data = this.getFilteredData().map(d => d.humidity);
+      this.humidityChart.update();
     },
     filterData() {
       this.updateCharts();
