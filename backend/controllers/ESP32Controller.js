@@ -41,10 +41,15 @@ exports.findArduinos = async (req, res) => {
   }
 };
 
+// addArduino 함수 수정
 exports.addArduino = async (req, res) => {
   try {
     const { id } = req.body;
-    // 필요한 경우 이 데이터를 데이터베이스에 저장하거나 다른 처리를 수행합니다.
+    // 노드를 추가한 후 MQTT 메시지 발행
+    const topic = `smartfarm/sensor/${id}`;
+    const message = JSON.stringify({ node_id: id, status: 'added' });
+    mqttClient.publish(topic, message);
+
     console.log(`Arduino added: ${id}`);
     res.status(200).send(`Arduino added: ${id}`);
   } catch (error) {

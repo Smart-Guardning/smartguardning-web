@@ -14,11 +14,17 @@
         </option>
       </select>
     </div>
+    <!-- 노드 상태를 보여주는 섹션 추가 -->
+    <div v-if="nodeStatus">
+      <h3>Node Status</h3>
+      <p>{{ nodeStatus }}</p>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import io from 'socket.io-client';  // socket.io-client 임포트
 
 export default {
   props: ['showModal'],
@@ -26,6 +32,8 @@ export default {
     return {
       arduinos: [],
       selectedArduino: '', // 선택한 아두이노를 저장하는 데이터 속성
+      nodeStatus: null, // 노드 상태를 저장하는 데이터 속성
+      socket: null, // WebSocket 객체
     }
   },
   methods: {
@@ -46,9 +54,16 @@ export default {
       // 예를 들어, 선택한 아두이노에 대한 정보를 가져오거나,
       // 선택한 아두이노를 사용하여 다른 작업을 수행할 수 있습니다.
     },
+    setupSocket() {
+      this.socket = io('http://localhost:8081');
+      this.socket.on('sensorData', (data) => {
+        this.nodeStatus = data;
+      });
+    },
   },
   created() {
     this.findArduinos();
+    this.setupSocket(); // WebSocket 연결 설정
   }
 }
 </script>
