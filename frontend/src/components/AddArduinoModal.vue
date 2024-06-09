@@ -1,12 +1,12 @@
 <template>
   <div v-if="showModal" class="modal">
     <div class="modal-content">
-      <button @click="closeModal">Close</button>
+      <button @click="closeModal">닫기</button>
       <div>
-        <h2>Select Arduino Node to Add</h2>
+        <h2>선택할 수 있는 센서노드가 없습니다.</h2>
         <div v-for="node in availableNodes" :key="node.node_id" class="node-item">
           <p>{{ node.node_id }} - {{ node.description }}</p>
-          <button @click="addArduino(node.node_id, node.description)">Add</button>
+          <button @click="addArduino(node.node_id, node.description)">추가</button>
         </div>
       </div>
     </div>
