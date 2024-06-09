@@ -1,10 +1,7 @@
 <template>
   <div>
-    <h2>Node Details for {{ nodeId }}</h2>
-    <div>
-      <h3>Sensor Data</h3>
-      <canvas id="sensor-chart" width="600" height="400"></canvas>
-    </div>
+    <h1>Node Details for {{ node_id }}</h1>
+    <canvas id="sensor-chart"></canvas>
   </div>
 </template>
 
@@ -13,84 +10,107 @@ import io from 'socket.io-client';
 import Chart from 'chart.js';
 
 export default {
-  name: 'NodeDetail',
-  props: {
-    nodeId: String
-  },
+  props: ['node_id'],
   data() {
     return {
+      socket: null,
       chart: null,
-      socket: null
+      sensorData: [],
     };
   },
   methods: {
+    setupSocket() {
+      this.socket = io('http://localhost:8081');
+
+      this.socket.on('sensorData', (data) => {
+        const parsedData = JSON.parse(data);
+        if (parsedData.node_id === this.node_id) {
+          this.sensorData.push(parsedData);
+          this.updateChart();
+        }
+      });
+    },
+    fetchSensorData() {
+      fetch(`http://localhost:3000/api/sensor-data/${this.node_id}`)
+        .then(response => response.json())
+        .then(data => {
+          this.sensorData = data;
+          this.initializeChart();
+        });
+    },
     initializeChart() {
       const ctx = document.getElementById('sensor-chart').getContext('2d');
       this.chart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: [],
+          labels: this.sensorData.map(d => d.timestamp),
           datasets: [
             {
               label: 'Soil Moisture',
+              data: this.sensorData.map(d => d.soil_moisture),
               borderColor: 'rgba(75, 192, 192, 1)',
-              backgroundColor: 'rgba(75, 192, 192, 0.2)',
-              data: []
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: 'Water Level',
-              borderColor: 'rgba(153, 102, 255, 1)',
-              backgroundColor: 'rgba(153, 102, 255, 0.2)',
-              data: []
+              data: this.sensorData.map(d => d.water_level),
+              borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: 'Temperature',
-              borderColor: 'rgba(255, 159, 64, 1)',
-              backgroundColor: 'rgba(255, 159, 64, 0.2)',
-              data: []
+              data: this.sensorData.map(d => d.temperature),
+              borderColor: 'rgba(255, 206, 86, 1)',
+              borderWidth: 1,
+              fill: false,
             },
             {
               label: 'Humidity',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
-              data: []
+              data: this.sensorData.map(d => d.humidity),
+              borderColor: 'rgba(153, 102, 255, 1)',
+              borderWidth: 1,
+              fill: false,
             }
           ]
         },
         options: {
+          responsive: true,
           scales: {
             xAxes: [{
               type: 'time',
               time: {
                 unit: 'minute'
-              },
-              distribution: 'linear'
+              }
             }]
           }
         }
       });
     },
-    addDataToChart(data) {
-      const timestamp = new Date();
-      this.chart.data.labels.push(timestamp);
-      this.chart.data.datasets[0].data.push({ t: timestamp, y: data.soil_moisture });
-      this.chart.data.datasets[1].data.push({ t: timestamp, y: data.water_level });
-      this.chart.data.datasets[2].data.push({ t: timestamp, y: data.temperature });
-      this.chart.data.datasets[3].data.push({ t: timestamp, y: data.humidity });
-      this.chart.update();
-    },
-    setupSocket() {
-      this.socket = io('http://localhost:8081');
-      this.socket.on('sensorData', (message) => {
-        const data = JSON.parse(message);
-        if (data.node_id === this.nodeId) {
-          this.addDataToChart(data);
+    updateChart() {
+      this.chart.data.labels.push(this.sensorData[this.sensorData.length - 1].timestamp);
+      this.chart.data.datasets.forEach((dataset, index) => {
+        switch (index) {
+          case 0:
+            dataset.data.push(this.sensorData[this.sensorData.length - 1].soil_moisture);
+            break;
+          case 1:
+            dataset.data.push(this.sensorData[this.sensorData.length - 1].water_level);
+            break;
+          case 2:
+            dataset.data.push(this.sensorData[this.sensorData.length - 1].temperature);
+            break;
+          case 3:
+            dataset.data.push(this.sensorData[this.sensorData.length - 1].humidity);
+            break;
         }
       });
+      this.chart.update();
     }
   },
-  created() {
-    this.initializeChart();
+  mounted() {
+    this.fetchSensorData();
     this.setupSocket();
   },
   beforeDestroy() {
@@ -100,6 +120,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-</style>
