@@ -16,10 +16,8 @@
       </button>
     </div>
     <div class="mt-4">
-      <button @click="testPump" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">물 펌프
-        테스트</button>
-      <button @click="showSettings" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">노드
-        설정</button>
+      <button @click="testPump" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2">물 펌프 테스트</button>
+      <button @click="showSettings" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">노드 설정</button>
     </div>
     <div class="chart-container mt-6">
       <div class="chart-item large-chart">
@@ -44,12 +42,25 @@
         <label for="targetMoisture" class="block text-gray-700 text-sm font-bold mb-2">임계 토양 습도:</label>
         <input type="number" v-model="settings.targetMoisture" id="targetMoisture"
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-        <label for="wateringDuration" class="block text-gray-700 text-sm font-bold mb-2 mt-4">펌프 작동 시간 (ms):</label>
+        <label for="wateringDuration" class="block text-gray-700 text-sm font-bold mb-2 mt-4">펌프 작동 시간 (초):</label>
         <input type="number" v-model="settings.wateringDuration" id="wateringDuration"
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-        <label for="measurementInterval" class="block text-gray-700 text-sm font-bold mb-2 mt-4">센싱 대기 시간 (s):</label>
+        <label for="measurementInterval" class="block text-gray-700 text-sm font-bold mb-2 mt-4">센싱 대기 시간 (초):</label>
         <input type="number" v-model="settings.measurementInterval" id="measurementInterval"
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+        
+        <!-- 추가된 필드 -->
+        <label for="autoWater" class="block text-gray-700 text-sm font-bold mb-2 mt-4">자동 물주기:</label>
+        <select v-model="settings.autoWater" id="autoWater" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+          <option value="ON">ON</option>
+          <option value="OFF">OFF</option>
+        </select>
+        <label for="sleepMode" class="block text-gray-700 text-sm font-bold mb-2 mt-4">슬립 모드:</label>
+        <select v-model="settings.sleepMode" id="sleepMode" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+          <option value="ON">ON</option>
+          <option value="OFF">OFF</option>
+        </select>
+        
         <div class="modal-buttons flex justify-end mt-6">
           <button @click="saveSettings"
             class="btn btn-blue bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">저장</button>
@@ -79,8 +90,10 @@ export default {
       showSettingsModal: false,
       settings: {
         targetMoisture: 2500,
-        wateringDuration: 3000,
-        measurementInterval: 30
+        wateringDuration: 3,  // 초 단위로 변경
+        measurementInterval: 30,
+        autoWater: 'OFF',
+        sleepMode: 'OFF'
       }
     };
   },
@@ -97,7 +110,7 @@ export default {
       fetch(`http://localhost:3000/api/control-pump/${this.node_id}?action=on`)
         .then(() => setTimeout(() => {
           fetch(`http://localhost:3000/api/control-pump/${this.node_id}?action=off`);
-        }, 3000));
+        }, this.settings.wateringDuration * 1000));  // 초 단위로 변환
     },
     showSettings() {
       this.showSettingsModal = true;
@@ -106,22 +119,28 @@ export default {
       this.showSettingsModal = false;
     },
     saveSettings() {
-      fetch(`http://localhost:3000/api/save-settings/${this.node_id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(this.settings)
-      })
-        .then(response => response.json())
-        .then(data => {
-          console.log(data);
-          this.closeSettings();
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
+  const settingsToSave = { 
+    ...this.settings, 
+    wateringDuration: this.settings.wateringDuration * 1000,
+    autoWater: this.settings.autoWater,
+    sleepMode: this.settings.sleepMode
+  };
+  fetch(`http://localhost:3000/api/save-settings/${this.node_id}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
     },
+    body: JSON.stringify(settingsToSave)
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+    this.closeSettings();
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+},
     initializeChart(ctx, label, data, color, yAxisLimits = null) {
       const options = {
         responsive: true,
@@ -307,6 +326,7 @@ export default {
   }
 };
 </script>
+
 <style scoped>
 .chart-container {
   display: flex;

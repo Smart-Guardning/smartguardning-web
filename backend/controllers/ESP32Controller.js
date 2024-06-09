@@ -110,12 +110,21 @@ exports.saveSettings = (req, res) => {
   const settings = req.body;
   const topic = `smartfarm/settings/${nodeId}`;
 
-  mqttClient.publish(topic, JSON.stringify(settings), (err) => {
-    if (err) {
-      console.error('Failed to publish MQTT message:', err);
-      res.status(500).send('Failed to save settings');
-    } else {
-      res.status(200).send('Settings saved');
-    }
+  const settingsMessages = [
+    `TARGET_MOISTURE:${settings.targetMoisture}`,
+    `AUTO_WATER:${settings.autoWater === 'ON' ? 'ON' : 'OFF'}`,
+    `WATER_DURATION:${settings.wateringDuration}`,
+    `MEASUREMENT_INTERVAL:${settings.measurementInterval}`,
+    `SLEEP:${settings.sleepMode === 'ON' ? 'ON' : 'OFF'}`
+  ];
+
+  settingsMessages.forEach(message => {
+    mqttClient.publish(topic, message, (err) => {
+      if (err) {
+        console.error('Failed to publish MQTT message:', err);
+      }
+    });
   });
+
+  res.status(200).send('Settings saved');
 };
