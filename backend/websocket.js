@@ -1,16 +1,20 @@
 const http = require('http');
 const socketIo = require('socket.io');
+
 const server = http.createServer();
 const io = socketIo(server, {
-  cors: {
-    origin: '*', // 모두 허용
-  }
+  pingInterval: 10000, // 10 seconds
+  pingTimeout: 5000,   // 5 seconds
+  cookie: false
 });
 
 io.on('connection', (socket) => {
   socket.on('sensorData', (data) => {
-    // Handle the sensor data here
     console.log(`Received sensor data => ${data}`);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`Client disconnected: ${reason}`);
   });
 });
 

@@ -15,5 +15,5 @@ require('./websocket.js');
 const server = app.listen(3000, function () {
     console.log('Server is running on http://localhost:3000');
 });
-
+server.timeout = 0;
 module.exports = server;

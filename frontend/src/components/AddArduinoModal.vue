@@ -1,19 +1,21 @@
 <template>
   <div v-if="showModal" class="modal">
     <div class="modal-content">
-      <button @click="closeModal" class="close-button">Close</button>
+      <button @click="closeModal">Close</button>
       <div>
-        <h2 class="title">Select Arduino Node to Add</h2>
+        <h2>Select Arduino Node to Add</h2>
         <div v-for="node in availableNodes" :key="node.node_id" class="node-item">
-          <p class="node-name">{{ node.node_id }}</p>
-          <button @click="addArduino(node.node_id, node.description)" class="add-button">Add</button>
+          <p>{{ node.node_id }} - {{ node.description }}</p>
+          <button @click="addArduino(node.node_id, node.description)">Add</button>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios';
+
 export default {
   props: {
     showModal: Boolean,
